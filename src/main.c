@@ -78,12 +78,52 @@ void work_handler(struct k_work* work);
 */
 void producer_entry(void *p1, void *p2, void *p3){
 	struct data_item item;
+	uint32_t count=0;
+	
 	printk("Producer thread started (ID : %p)\n", k_current_get());
+	
+	while(1){
+	/* prepare data item*/
+	item.id = count;
+	item.value = sys_rand32_get() % 100;
+	snprintk(item.message, sizeof(item.message), "Data-%u", count);
+	
+	/* send messages to queue (blocking if queue is full */
+	if(k_msgq_put(&data_msgq, &item, K_FOREVER)==0){
+		printk("[Producer] Sent: ID=%u, Value=%u, Msg=%s\n", item.id, item.value, item.message);
+		/* Update shared counter with mutex protection */
+		k_mutex_lock(&shared_resource_mutex, K_FOREVER);
+		produced_items++;
+		k_mutex_unlock(&shared_resource_mutex);
+
+		count++;
+	}
+	/* Signal consumer that data is avaialable */
+	k_sem_give(&consumer_sem);
+	k_msleep(500);
+	}
 }
 
 void consumer_entry(void* p1, void *p2, void *p3){
 	struct data_item item;
 	printk("Consumer thread started (ID : %p)\n",k_current_get());
+
+	while(1){
+	/* wait for producer signal */
+	k_sem_take(&consumer_sem, K_FOREVER);
+
+	/* receive message from queue (blocking if queue is empty)*/
+	if(k_msgq_get(&data_msgq, &item, K_FOREVER)==0){
+		printk("[CONSUMER] RECIEVED : ID=%u, Value=%u, Msg=%s\n", item.id , item.value, item.message);
+
+		/* update shared counter with mutex protection */
+		k_mutex_lock(&shared_resource_mutex, K_FOREVER);
+		consumed_items++;
+		k_mutex_unlock(&shared_resource_mutex);
+
+		k_msleep(100); 
+	}
+	}
 }
 
 
