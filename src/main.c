@@ -125,7 +125,35 @@ void consumer_entry(void* p1, void *p2, void *p3){
 	}
 	}
 }
+/*
+* CCONCEPT 2 : PRIORITY DEMONSTRATION 
+* shows how higher priority threads preempt lower priority threads 
+*/
+void high_priority_entry(void *p1, void *p2, void *p3){
+	printk("High priority thread started (priority : %d)\n",
+		k_thread_priority_get(k_current_get()));
+	while(1){
+	printk("[HIGH-PRIO] Running - I can preempt lower priority threads!\n");
+	for(volatile int i=0;i<100000;i++){
+	/* do some work*/
+	}
+	k_msleep(2000);
+	}
+}
 
+void low_priority_entry(void *p1, void *p2, void *p3){
+	printk("Low Priority thread started (priority : %d)\n",
+		k_thread_priority_get(k_current_get()));
+	while(1){
+	printk("[LOW-PRIO] Running - I can get preempted by higher priority threads\n");
+
+	for(volatile int i=0;i<100000;i++){
+	/* busy work */
+	}
+
+	k_msleep(2000);
+	}
+}
 
 int main(void){
 	
@@ -145,6 +173,21 @@ int main(void){
 			CONSUMER_PRIORITY, 0, K_NO_WAIT);
 	k_thread_name_set(&consumer_thread, "consumer");
 	
+	/* Create high priority thread */
+	k_thread_create(&high_prio_thread, high_prio_stack,
+			K_THREAD_STACK_SIZEOF(high_prio_stack),
+			high_priority_entry,
+			NULL, NULL, NULL,
+			HIGH_PRIORITY_THREAD,0, K_NO_WAIT);
+	k_thread_name_set(&high_prio_thread, "high-prio");
+	
+	/*create low priority thread */
+	k_thread_create(&low_prio_thread, low_prio_stack,
+			K_THREAD_STACK_SIZEOF(low_prio_stack),
+			low_priority_entry,
+			NULL, NULL, NULL,
+			LOW_PRIORITY_THREAD, 0, K_NO_WAIT);
+	k_thread_name_set(&low_prio_thread, "low-prio");
 	while(1){
 		k_msleep(1000);
 	}
