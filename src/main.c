@@ -15,8 +15,8 @@
 #define CONSUMER_PRIORITY 5
 #define HIGH_PRIORITY_THREAD 3
 #define LOW_PRIORITY_THREAD 7
-#define WORKER_PRIORITY_THREAD 6
-#define MONITOR_PRIORITY_THREAD 4
+#define WORKER_PRIORITY 6
+#define MONITOR_PRIORITY 4
 
 /* Message queue parameters */
 #define MSGQ_MAX_MSGS 10
@@ -155,7 +155,35 @@ void low_priority_entry(void *p1, void *p2, void *p3){
 	}
 }
 
+/* 
+* CONCEPT 3 : WORK QUEUE
+* Demonstrates deferred work processing
+*/
+
+void work_handler(struct k_work *work){
+	printk("[WORK-QUEUE] Processing deferred work\n");
+	
+	k_msleep(100);
+
+	printk("[WORK-QUEUE] Work completed\n");
+}
+
+void worker_entry(void *p1, void *p2, void *p3){
+	printk("Worker thread started\n");
+
+	while(1){
+	printk("[Worker] Submitting work to queue\n");
+	k_work_submit(&my_work);
+	
+	k_msleep(3000);
+	}
+}
+
 int main(void){
+	
+	
+	/* initialize work handler*/
+	k_work_init(&my_work, work_handler);
 	
 	/* create producer thread */
 	k_thread_create(&producer_thread, producer_stack,
@@ -188,6 +216,14 @@ int main(void){
 			NULL, NULL, NULL,
 			LOW_PRIORITY_THREAD, 0, K_NO_WAIT);
 	k_thread_name_set(&low_prio_thread, "low-prio");
+
+	/* Create worker thread*/
+	k_thread_create(&worker_thread, worker_stack,
+			K_THREAD_STACK_SIZEOF(worker_stack),
+			worker_entry,
+			NULL, NULL, NULL,
+			WORKER_PRIORITY, 0, K_NO_WAIT);
+	k_thread_name_set(&worker_thread, "worker");
 	while(1){
 		k_msleep(1000);
 	}
