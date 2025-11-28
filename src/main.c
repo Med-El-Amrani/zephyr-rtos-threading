@@ -179,11 +179,24 @@ void worker_entry(void *p1, void *p2, void *p3){
 	}
 }
 
+/*
+* CONCEPT 4 : TIMER CALLBACK
+* Periodic timer demonstartion
+*/
+
+void timer_handler(struct k_timer *timer){
+	printk("[TIMER] periodic timer expired! system uptime : %lld ms\n", k_uptime_get());
+}
+
 int main(void){
 	
 	
 	/* initialize work handler*/
 	k_work_init(&my_work, work_handler);
+
+	/* initialize and start periodic timer (fires every 10 seconds*/
+	k_timer_init(&periodic_timer, timer_handler, NULL);
+	k_timer_start(&periodic_timer, K_MSEC(10000), K_MSEC(10000));
 	
 	/* create producer thread */
 	k_thread_create(&producer_thread, producer_stack,
