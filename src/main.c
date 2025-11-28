@@ -188,8 +188,35 @@ void timer_handler(struct k_timer *timer){
 	printk("[TIMER] periodic timer expired! system uptime : %lld ms\n", k_uptime_get());
 }
 
-int main(void){
+/*
+* CONCEPT 5 : SYSTEM MONITOR
+* Monitors system state and demonstrates thread inspection
+*/
+void monitor_entry(void *p1, void *p2, void *p3){
+	printk("Monitor thread started\n");
+	while(1){
+	k_msleep(5000);
+	printk("\n================== SYSTEM STATE =====================\n");
+	/* access shared resources safely */
+	k_mutex_lock(&shared_resource_mutex, K_FOREVER);
+	printk("Produced Items: %u\n", produced_items);
+	printk("Consumed items: %u\n", consumed_items);
+	printk("Shared counter : %u\n", shared_counter);
+	k_mutex_unlock(&shared_resource_mutex);
+	/* message queue statistics*/
+	printk("Message Queue : %u/%u messages\n",
+		k_msgq_num_used_get(&data_msgq),
+		MSGQ_MAX_MSGS);
 	
+	printk("System update : %lld ms\n", k_uptime_get());
+	printk("==========================================\n\n"); 
+	}
+}
+
+int main(void){
+	printk("\n================================================\n");
+	printk("ZEPHYR RTOS THREADING DEMONSTRATION \n");
+	printk("==================================================\n\n");
 	
 	/* initialize work handler*/
 	k_work_init(&my_work, work_handler);
@@ -237,9 +264,22 @@ int main(void){
 			NULL, NULL, NULL,
 			WORKER_PRIORITY, 0, K_NO_WAIT);
 	k_thread_name_set(&worker_thread, "worker");
+
+	/* Create monitor thread*/
+	k_thread_create(&monitor_thread, monitor_stack,
+			K_THREAD_STACK_SIZEOF(monitor_stack),
+			monitor_entry,
+			NULL, NULL, NULL,
+			MONITOR_PRIORITY, 0 , K_NO_WAIT);
+
+	k_thread_name_set(&monitor_thread, "monitor");
+	
+	printk("All threads created and started\n");
 	while(1){
 		k_msleep(1000);
 	}
 	return 0;
 }
+
+
 
