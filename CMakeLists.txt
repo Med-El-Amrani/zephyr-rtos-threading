@@ -7,4 +7,9 @@ find_package(Zephyr REQUIRED HINTS $ENV{ZEPHYR_BASE})
 project(zephyr_threads_demo)
 
 # Add source files
-target_sources(app PRIVATE src/main.c)
+# full demo  for real-time primitive concepts
+# target_sources(app PRIVATE src/main.c)
+
+# Advanced concepts
+# Reader-Writer demo
+target_sources(app PRIVATE src/demo_reader_writer.c)
