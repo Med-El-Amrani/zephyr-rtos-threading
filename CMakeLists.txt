@@ -12,4 +12,7 @@ project(zephyr_threads_demo)
 
 # Advanced concepts
 # Reader-Writer demo
-target_sources(app PRIVATE src/demo_reader_writer.c)
+#target_sources(app PRIVATE src/demo_reader_writer.c)
+
+# thread pool demo
+target_sources(app PRIVATE src/demo_thread_pool.c)
