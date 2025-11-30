@@ -15,4 +15,7 @@ project(zephyr_threads_demo)
 #target_sources(app PRIVATE src/demo_reader_writer.c)
 
 # thread pool demo
-target_sources(app PRIVATE src/demo_thread_pool.c)
+#target_sources(app PRIVATE src/demo_thread_pool.c)
+
+# barrier synchronization demo
+target_sources(app PRIVATE src/demo_barrier.c)
